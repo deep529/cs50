@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
 			for(int k=0; k<padding_new; k++)
 				fputc(0x00, outptr);
 		
-			fseek(inptr, -sizeof(RGBTRIPLE)*abs(bi.biWidth)/n, SEEK_CUR);
+			fseek(inptr, -( (int)sizeof(RGBTRIPLE) )*abs(bi.biWidth)/n, SEEK_CUR);
 		}
-		fseek(inptr, abs(bi.biWidth)*sizeof(RGBTRIPLE)/n + padding_old, SEEK_CUR);
+		fseek(inptr, abs(bi.biWidth)*( (int)sizeof(RGBTRIPLE) )/n + padding_old, SEEK_CUR);
 	}
 
 	fclose(inptr);
