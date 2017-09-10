@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "give proper input (ie. n <input file> <output file>  n should be less than 101)\n");
 		return 1;
 	}
-	
+
 	char *infile = argv[2];
 	char *outfile = argv[3];
 
@@ -44,19 +44,19 @@ int main(int argc, char *argv[])
 		return 4;		
 	}
 
-	int padding_old = (4 - (bi.biWidth*sizeof(RGBTRIPLE)) % 4) % 4;
-
+	int padding_infile = (4 - (bi.biWidth*sizeof(RGBTRIPLE)) % 4) % 4;
+	int padding_outfile = (4 - (n*bi.biWidth*sizeof(RGBTRIPLE)) % 4) % 4;
+	
 	bi.biHeight = bi.biHeight*n;  //adjusting to new height
 	bi.biWidth = bi.biWidth*n; //adjusting to new width
-
-	bf.bfSize = bf.bfSize + (n*n-1)*abs(bi.biHeight)*abs(bi.biWidth)*sizeof(RGBTRIPLE); //adjusting size of file
-	bi.biSizeImage = n*n*abs(bi.biHeight)*abs(bi.biWidth)*sizeof(RGBTRIPLE); //adjusting size of image
+	
+	bi.biSizeImage = abs(bi.biHeight) * ( abs(bi.biWidth)*sizeof(RGBTRIPLE) + padding_outfile ); //adjusting size of image
+	bf.bfSize = bi.biSizeImage + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER); //adjusting size of file
 
 	//writing into output file
 	fwrite(&bf, sizeof(BITMAPFILEHEADER), 1, outptr);
 	fwrite(&bi, sizeof(BITMAPINFOHEADER), 1, outptr);
 
-	int padding_new = (4 - (bi.biWidth*sizeof(RGBTRIPLE)) % 4) % 4;
 
 	for(int i=0,bh = abs(bi.biHeight)/n; i<bh; i++)
 	{
@@ -70,12 +70,12 @@ int main(int argc, char *argv[])
 				for(int p=0; p<n; p++)
 					fwrite(&rgb, sizeof(RGBTRIPLE), 1, outptr);
 			}
-			for(int k=0; k<padding_new; k++)
+			for(int p=0; p<padding_outfile; p++)
 				fputc(0x00, outptr);
 		
-			fseek(inptr, -( (int)sizeof(RGBTRIPLE) )*abs(bi.biWidth)/n, SEEK_CUR);
+			fseek(inptr, -((int)sizeof(RGBTRIPLE))*abs(bi.biWidth)/n, SEEK_CUR);
 		}
-		fseek(inptr, abs(bi.biWidth)*( (int)sizeof(RGBTRIPLE) )/n + padding_old, SEEK_CUR);
+		fseek(inptr, abs(bi.biWidth)*((int)sizeof(RGBTRIPLE))/n + padding_infile, SEEK_CUR);
 	}
 
 	fclose(inptr);
