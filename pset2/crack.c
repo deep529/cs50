@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	// printf("%s\n",crypt(s,salt));
 	for(i=0; i<operations; i++)
 	{
-		if(strcmp(argv[1],crypt(s,salt)) == 0)
+	    if(strcmp(argv[1],crypt(s,salt)) == 0)
 			break;
 
 		// printf("%s\n",s);
