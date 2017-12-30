@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}
+	Index
+{% endblock %}
+
+{% block main %}
+	<table>
+		<tr>
+			<th>Symbol</th>
+			<th>Quantity</th>
+			<th>Current Price</th>
+			<th>Value</th>
+		</tr>
+		{% for i in range({{size}}) %}
+		<tr>
+			<td>{{ symbol[i] }}</td>
+			<td>{{ share[i] }}</td>	
+			<td>{{ price[i] }}</td>	
+			<td>{{ share[i]*price[i] }}</td>		
+		</tr>
+		{% endfor %}
+	</table>
+{% endblock %}
