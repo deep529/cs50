@@ -118,15 +118,24 @@ def index():
 
     crsr.execute("SELECT symbol,newHolding FROM history WHERE id=(?) ORDER BY time DESC;", (session["user_id"],) )
     transactionHistory = crsr.fetchall()
+    total = 0.0
 
     for row in transactionHistory:
         if int(row[1])>0 and row[0] not in symbol:
             symbol.append(row[0])
             share.append(int(row[1]))
             currentPrice = lookup(row[0])
-            price.append(currentPrice["price"])
+            price.append( round(currentPrice["price"],2) )
+            total = total + int(row[1])*currentPrice["price"]
 
-    return render_template("index.html", symbol=symbol, share=share, price=price, size=len(symbol))
+    crsr.execute("SELECT cash FROM users WHERE id=(?);", (session["user_id"],) )
+    cash = crsr.fetchone()
+    cash = cash[0]
+    cash = round(cash, 2)
+    total = total + cash
+    total = round(total, 2)
+
+    return render_template("index.html", symbol=symbol, share=share, price=price, size=len(symbol), cash=cash, total=total)
 
 
 # ---------------------------------------------QUOTE---------------------------------------------
@@ -163,13 +172,13 @@ def buy():
             return error("Error occurred in retrieving cost")
 
         crsr.execute("SELECT cash FROM users WHERE id=(?);", (session["user_id"],) )
-        # money is a tuple here, use money[0] to access amount
         money = crsr.fetchone()
+        money = money[0]
 
-        print("balance:{} bill:{}".format(money[0], float(request.form.get("quantity"))*float(quoteResult["price"]) ))
+        print("balance:{} bill:{}".format(money, float(request.form.get("quantity"))*float(quoteResult["price"]) ))
 
         # abort if user do not have enough money
-        if money[0] < float(request.form.get("quantity"))*float(quoteResult["price"]):
+        if money < float(request.form.get("quantity"))*float(quoteResult["price"]):
             print("Don't have enough cash")
             return error("Don't have enough cash")
 
@@ -182,13 +191,12 @@ def buy():
             prevHolding = int(prevData[0])
 
         print("prevHolding={}".format(prevHolding))
-        print("id={}, symbol={}, rate={}, quantity={}, newHolding={}".format(type(session["user_id"]), type(request.form.get("symbol")), type(quoteResult["price"]), type(request.form.get("quantity")), type(request.form.get("quantity")+prevHolding),) )
 
         crsr.execute("INSERT INTO history (id, symbol, rate, quantity, newHolding) VALUES ((?), (?), (?), (?), (?));", \
-            (session["user_id"], request.form.get("symbol"), float(quoteResult["price"]), request.form.get("quantity"), request.form.get("quantity")+prevHolding,) )
+            (session["user_id"], request.form.get("symbol"), float(quoteResult["price"]), int(request.form.get("quantity")), int(request.form.get("quantity"))+prevHolding,) )
 
-        print("updated cash={}".format(money[0]-float(request.form.get("quantity"))*float(quoteResult["price"]) ) )
-        crsr.execute("UPDATE users SET cash=(?) WHERE id=(?);", (money[0]-float(request.form.get("quantity"))*float(quoteResult["price"]), session["user_id"],) )
+        print("updated cash={}".format(money-float(request.form.get("quantity"))*float(quoteResult["price"]) ) )
+        crsr.execute("UPDATE users SET cash=(?) WHERE id=(?);", (money-float(request.form.get("quantity"))*float(quoteResult["price"]), session["user_id"],) )
         db.commit()
         return error("SUCCESSFULLY BOUGHT")
 

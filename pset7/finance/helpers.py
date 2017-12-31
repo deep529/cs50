@@ -37,6 +37,9 @@ def login_required(f):
 def lookup(symbol):
     """Look up quote for symbol."""
 
+    if symbol==None:
+        return None
+
     # reject symbol if it starts with caret
     if symbol.startswith("^"):
         return None
@@ -45,35 +48,36 @@ def lookup(symbol):
     if "," in symbol:
         return None
 
+    # yahoo discontinued its service, so we won't use this
     # query Yahoo for quote
     # http://stackoverflow.com/a/21351911
-    try:
+    # try:
 
-        # GET CSV
-        url = f"http://download.finance.yahoo.com/d/quotes.csv?f=snl1&s={symbol}"
-        webpage = urllib.request.urlopen(url)
+    #     # GET CSV
+    #     url = f"http://download.finance.yahoo.com/d/quotes.csv?f=snl1&s={symbol}"
+    #     webpage = urllib.request.urlopen(url)
 
-        # read CSV
-        datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
+    #     # read CSV
+    #     datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
 
-        # parse first row
-        row = next(datareader)
+    #     # parse first row
+    #     row = next(datareader)
 
-        # ensure stock exists
-        try:
-            price = float(row[2])
-        except:
-            return None
+    #     # ensure stock exists
+    #     try:
+    #         price = float(row[2])
+    #     except:
+    #         return None
 
-        # return stock's name (as a str), price (as a float), and (uppercased) symbol (as a str)
-        return {
-            "name": row[1],
-            "price": price,
-            "symbol": row[0].upper()
-        }
+    #     # return stock's name (as a str), price (as a float), and (uppercased) symbol (as a str)
+    #     return {
+    #         "name": row[1],
+    #         "price": price,
+    #         "symbol": row[0].upper()
+    #     }
 
-    except:
-        pass
+    # except:
+    #     pass
 
     # query Alpha Vantage for quote instead
     # https://www.alphavantage.co/documentation/

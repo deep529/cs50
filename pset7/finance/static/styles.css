@@ -43,9 +43,20 @@ main img
     max-width: 100%;
 }
 
-main td
+main td, th
 {
     /* left-align tables' cells */
-    text-align: left;
+    text-align: center;
+    border: 1px solid #000000;
     padding: 8px;
+}
+
+main tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+main table {
+    border-collapse: collapse;
+    width: 60%;
+    margin: 0px auto;
 }
