@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}
+	Transaction History
+{% endblock %}
+
+{% block main %}
+	<table>
+		<tr>
+			<th>Time</th>
+			<th>Symbol</th>
+			<th>Rate(in US$)</th>
+			<th>Quantity</th>
+			<th>Remaining Shares</th>
+		</tr>
+		{% for i in range(size) %}
+		<tr>
+			<td>{{ history[i][0] }}</td>
+			<td>{{ history[i][1] }}</td>
+			<td>{{ history[i][2] }}</td>
+			<td>{{ history[i][3] }}</td>
+			<td>{{ history[i][4] }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+{% endblock %}

@@ -128,7 +128,7 @@ def index():
             currentPrice = lookup(row[0])
             price.append( round(currentPrice["price"],2) )
             total = total + int(row[1])*currentPrice["price"]
-        checked.append(row[0])    
+        checked.append(row[0])
 
     crsr.execute("SELECT cash FROM users WHERE id=(?);", (session["user_id"],) )
     cash = crsr.fetchone()
@@ -215,7 +215,7 @@ def sell():
             if row[0] not in checked and int(row[1])>0 and row[0] not in symbol:
                 symbol.append(row[0])
             checked.append(row[0])
-            
+
         return render_template("sell.html", symbol=symbol, size=len(symbol))
     else:
         print("{},{}".format(request.form.get("symbol"), request.form.get("quantity") ))
@@ -252,8 +252,9 @@ def sell():
 @app.route("/history")
 @login_required
 def history():
-
-    return error("TODO")
+    crsr.execute("SELECT time,symbol,rate,quantity,newHolding FROM history WHERE id=(?) ORDER BY time DESC;", (session["user_id"],) )
+    history = crsr.fetchall()
+    return render_template("history.html", history=history, size=len(history))
 
 
 # ---------------------------------------------LOGOUT---------------------------------------------
