@@ -112,6 +112,7 @@ def login():
 @app.route("/")
 @login_required
 def index():
+    checked= []
     symbol = []
     share = []
     price = []
@@ -121,12 +122,13 @@ def index():
     total = 0.0
 
     for row in transactionHistory:
-        if int(row[1])>0 and row[0] not in symbol:
+        if row[0] not in checked and int(row[1])>0 and row[0] not in symbol:
             symbol.append(row[0])
             share.append(int(row[1]))
             currentPrice = lookup(row[0])
             price.append( round(currentPrice["price"],2) )
             total = total + int(row[1])*currentPrice["price"]
+        checked.append(row[0])    
 
     crsr.execute("SELECT cash FROM users WHERE id=(?);", (session["user_id"],) )
     cash = crsr.fetchone()
@@ -191,28 +193,66 @@ def buy():
             prevHolding = int(prevData[0])
 
         print("prevHolding={}".format(prevHolding))
-
+        # insert transaction in history table
         crsr.execute("INSERT INTO history (id, symbol, rate, quantity, newHolding) VALUES ((?), (?), (?), (?), (?));", \
             (session["user_id"], request.form.get("symbol"), float(quoteResult["price"]), int(request.form.get("quantity")), int(request.form.get("quantity"))+prevHolding,) )
-
+        # update user cash
         print("updated cash={}".format(money-float(request.form.get("quantity"))*float(quoteResult["price"]) ) )
         crsr.execute("UPDATE users SET cash=(?) WHERE id=(?);", (money-float(request.form.get("quantity"))*float(quoteResult["price"]), session["user_id"],) )
         db.commit()
-        return error("SUCCESSFULLY BOUGHT")
+        return error("SUCCESSFULLY BOUGHT!")
 
 # ---------------------------------------------SELL---------------------------------------------
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    """Sell shares of stock."""
-    return error("TODO")
+    if request.method == "GET":
+        checked = []
+        symbol = []
+        crsr.execute("SELECT symbol,newHolding FROM history WHERE id=(?) ORDER BY time DESC;", (session["user_id"],) )
+        rows = crsr.fetchall()
+        for row in rows:
+            if row[0] not in checked and int(row[1])>0 and row[0] not in symbol:
+                symbol.append(row[0])
+            checked.append(row[0])
+            
+        return render_template("sell.html", symbol=symbol, size=len(symbol))
+    else:
+        print("{},{}".format(request.form.get("symbol"), request.form.get("quantity") ))
+        crsr.execute("SELECT newHolding FROM history WHERE id=(?) AND symbol=(?) ORDER BY time DESC;", (session["user_id"], request.form.get("symbol"),) )
+        currentHolding = crsr.fetchone()
+        currentHolding = currentHolding[0]
+
+        # verifying enough shares
+        if int(request.form.get("quantity")) > currentHolding:
+            return error("You hold only {} shares of {}".format(currentHolding, request.form.get("symbol")))
+
+        # selling
+        rate = lookup(request.form.get("symbol"))
+        if rate==None:
+            return error("Error Occured in retrieving Cost")
+        rate = rate["price"]
+        newHolding = currentHolding - int(request.form.get("quantity"))
+        # insert transaction in history table
+        crsr.execute("INSERT INTO history (id, symbol, rate, quantity, newHolding) VALUES ((?), (?), (?), (?), (?));",\
+            (session["user_id"], request.form.get("symbol"), rate, -1*int(request.form.get("quantity")), newHolding,) )
+
+        # update user cash
+        crsr.execute("SELECT cash FROM users WHERE id=(?);", (session["user_id"],) )
+        cash = crsr.fetchone()
+        cash = cash[0]
+
+        cash = cash + rate*int(request.form.get("quantity"))
+        crsr.execute("UPDATE users SET cash=(?) WHERE id=(?);", (cash, session["user_id"],) )
+        db.commit()
+        return error("SUCCESSFULLY SOLD!")
 
 
 # ---------------------------------------------HISTORY---------------------------------------------
 @app.route("/history")
 @login_required
 def history():
-    """Show history of transactions."""
+
     return error("TODO")
 
 
