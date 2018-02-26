@@ -1,1 +1,1 @@
-Contains the code wrote in course cs50 (Harvard University)
+Contains the code written in course cs50 (Harvard University)
